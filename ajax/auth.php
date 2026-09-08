@@ -32,7 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if ($action === 'logout') {
     Auth::logout();
-    header('Location: ../index.php?page=login');
+    $target = file_exists(__DIR__ . '/../login.php') ? '../login.php' : '../pages/login.php';
+    header("Location: $target");
     exit;
 }
 

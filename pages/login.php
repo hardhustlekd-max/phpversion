@@ -1,6 +1,6 @@
 <?php
 /**
- * Standalone Login Page
+ * Standalone & Integrated Login Page
  * Faithfully matches the original login design with Ethiopian municipal identity
  * Works standalone, in subdirectories, and on shared hosting (InfinityFree, cPanel, XAMPP)
  */
@@ -23,15 +23,24 @@ if (file_exists($baseDir . '/includes/auth.php')) {
     require_once __DIR__ . '/includes/auth.php';
 }
 
-// 2. Safe Fallback Constants (prevents fatal error if config is missing or unreadable)
+// 2. Safe Fallback Constants
 if (!defined('APP_NAME_AM')) define('APP_NAME_AM', 'ባህርዳር ሞተረኞች ማህበር');
 if (!defined('APP_NAME_EN')) define('APP_NAME_EN', 'Bahir Dar Motorcyclists Association');
 if (!defined('APP_TITLE')) define('APP_TITLE', 'Enforcement Pro - Command Central');
 
 // Ensure Session
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    @session_start();
 }
+
+// Determine if the URL being visited is in the /pages/ subdirectory or at the root
+$scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+$isInPagesDir = (strpos($scriptPath, '/pages/') !== false);
+
+// Dynamically compute the redirect targets and asset prefix
+$dashboardUrl = $isInPagesDir ? '../index.php?page=dashboard' : 'index.php?page=dashboard';
+$assetPrefix  = $isInPagesDir ? '../' : './';
+$apiEndpoint  = $isInPagesDir ? '../ajax/auth_actions.php?action=login' : 'ajax/auth_actions.php?action=login';
 
 // Language handler
 if (isset($_GET['lang'])) {
@@ -42,12 +51,11 @@ $isAmharic = ($lang === 'am');
 
 // Check if already logged in -> redirect to dashboard
 if (class_exists('Auth') && Auth::isLoggedIn()) {
-    $target = file_exists(__DIR__ . '/../index.php') ? '../index.php?page=dashboard' : 'index.php?page=dashboard';
-    header("Location: $target");
+    header("Location: $dashboardUrl");
     exit;
 }
 
-// 3. Native Form POST Processing (Works even if AJAX / JavaScript fails or on restrictive hosts)
+// 3. Native Form POST Processing (Works even without JavaScript)
 $postError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $badge = trim($_POST['badge_id'] ?? $_POST['badgeId'] ?? '');
@@ -59,8 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (class_exists('Auth')) {
             $res = Auth::login($badge, $pass);
             if (!empty($res['success'])) {
-                $target = file_exists(__DIR__ . '/../index.php') ? '../index.php?page=dashboard' : 'index.php?page=dashboard';
-                header("Location: $target");
+                header("Location: $dashboardUrl");
                 exit;
             } else {
                 $postError = $res['error'] ?? ($isAmharic ? 'የመግቢያ መረጃው ትክክል አይደለም' : 'Invalid Badge ID or Password');
@@ -71,15 +78,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['badge_id'] = $badge;
             $_SESSION['role'] = (strpos(strtoupper($badge), 'SUPER') !== false) ? 'superadmin' : ((strpos(strtoupper($badge), 'ADMIN') !== false) ? 'admin' : ((strpos(strtoupper($badge), 'OFFICER') !== false) ? 'officer' : 'clerk'));
             $_SESSION['full_name'] = $badge;
-            $target = file_exists(__DIR__ . '/../index.php') ? '../index.php?page=dashboard' : 'index.php?page=dashboard';
-            header("Location: $target");
+            header("Location: $dashboardUrl");
             exit;
         }
     }
 }
-
-// Determine relative path for static assets
-$assetPrefix = file_exists(__DIR__ . '/../assets') ? '../' : './';
 ?>
 <!DOCTYPE html>
 <html lang="<?= $lang ?>" class="h-full bg-slate-100">
@@ -283,19 +286,22 @@ $assetPrefix = file_exists(__DIR__ . '/../assets') ? '../' : './';
       document.getElementById('password').value = pass;
     }
 
-    // Optional AJAX enhancement with seamless native fallback
+    // Modern AJAX login with dynamic relative redirection
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
       const alertBox = document.getElementById('loginAlert');
       const btn = document.getElementById('submitBtn');
       const badge = document.getElementById('badge_id').value.trim();
       const pass = document.getElementById('password').value;
 
-      // Determine correct endpoint relative to current location
-      const isSubdir = window.location.pathname.includes('/pages/');
-      const apiEndpoint = isSubdir ? '../ajax/auth.php?action=login' : 'ajax/auth.php?action=login';
-      const redirectTarget = isSubdir ? '../index.php?page=dashboard' : 'index.php?page=dashboard';
+      // Dynamically determine redirect path based on URL pathname
+      const isInPagesDir = window.location.pathname.includes('/pages/');
+      const apiEndpoint = isInPagesDir ? '../ajax/auth_actions.php?action=login' : 'ajax/auth_actions.php?action=login';
+      const redirectTarget = isInPagesDir ? '../index.php?page=dashboard' : 'index.php?page=dashboard';
 
       try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined text-lg animate-spin">refresh</span> <span>Signing in...</span>';
+
         const res = await fetch(apiEndpoint, {
           method: 'POST',
           headers: {
@@ -313,14 +319,15 @@ $assetPrefix = file_exists(__DIR__ . '/../assets') ? '../' : './';
             return;
           } else if (data.error) {
             e.preventDefault();
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined text-lg text-amber-400">login</span> <span><?= $isAmharic ? 'ይግቡ (Sign In)' : 'Sign In' ?></span>';
             alertBox.textContent = data.error;
             alertBox.classList.remove('hidden');
             return;
           }
         }
       } catch (err) {
-        // If AJAX fetch fails, let the browser submit normally via standard POST
-        console.log('AJAX bypassed, falling back to standard HTTP POST submission');
+        console.log('AJAX error, falling back to standard HTTP POST submission');
       }
     });
   </script>

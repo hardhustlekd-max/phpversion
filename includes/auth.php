@@ -58,7 +58,10 @@ class Auth {
                 echo json_encode(['success' => false, 'error' => 'Authentication required. Session expired.']);
                 exit;
             } else {
-                header('Location: index.php?page=login');
+                $scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+                $isInPages = (strpos($scriptPath, '/pages/') !== false);
+                $target = $isInPages ? '../login.php' : 'login.php';
+                header("Location: $target");
                 exit;
             }
         }

@@ -10,7 +10,7 @@ require_once __DIR__ . '/includes/ethiopian_calendar.php';
 
 // Check if user is logged in
 if (!Auth::isLoggedIn()) {
-    header('Location: pages/login.php');
+    header('Location: login.php');
     exit;
 }
 
