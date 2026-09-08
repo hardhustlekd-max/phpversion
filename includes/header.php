@@ -15,7 +15,7 @@ $ethDate = toEthiopianDate();
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title><?php echo APP_NAME; ?></title>
+  <title><?php echo defined('APP_NAME') ? APP_NAME : (defined('APP_NAME_AM') ? APP_NAME_AM : 'Enforcement Pro - Bahir Dar'); ?></title>
   <link rel="icon" type="image/png" href="public/logo.png" />
   <link rel="preload" href="public/AbyssinicaSIL-Regular.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com">

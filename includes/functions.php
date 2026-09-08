@@ -1,9 +1,20 @@
 <?php
 /**
  * System Core Helper Functions
+ * Hardened for PHP 8.3 and InfinityFree Shared Hosting
  */
 
+require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/auth.php';
+
+/**
+ * Safe HTML Escape Helper for PHP 8.1 / 8.2 / 8.3
+ * Prevents deprecation notices when null is passed
+ */
+function h(?string $str, string $default = ''): string {
+    return htmlspecialchars($str ?? $default, ENT_QUOTES, 'UTF-8');
+}
 
 /**
  * Return Standard JSON Response
@@ -32,8 +43,15 @@ function getRequestBody(): array {
 /**
  * Sanitize User String
  */
-function sanitize(string $val): string {
-    return trim(htmlspecialchars($val, ENT_QUOTES, 'UTF-8'));
+function sanitize(?string $val): string {
+    return trim(htmlspecialchars($val ?? '', ENT_QUOTES, 'UTF-8'));
+}
+
+/**
+ * Get currently authenticated user safely
+ */
+function getCurrentUser(): ?array {
+    return class_exists('Auth') ? Auth::user() : null;
 }
 
 /**
@@ -60,18 +78,18 @@ function logAuditAction(string $action, string $details, string $severity = 'inf
 
 /**
  * Check Role Permission for a given task ID (1-16)
+ * Return type is 'bool' (compliant with PHP 8.3)
  */
-function isTaskAllowed(int $taskId, ?string $userRole = null): boolean {
+function isTaskAllowed(int $taskId, ?string $userRole = null): bool {
     if (!$userRole) {
         $currentUser = getCurrentUser();
         $userRole = $currentUser['role'] ?? 'clerk';
     }
 
-    if ($userRole === 'superadmin') {
+    if ($userRole === 'superadmin' || $userRole === 'super_admin') {
         return true;
     }
 
-    // Role mapping: clerk -> role-secretary, officer -> role-officer, admin -> role-manager, superadmin -> role-superadmin
     $roleMap = [
         'clerk' => 'role-secretary',
         'officer' => 'role-officer',
@@ -164,7 +182,7 @@ function toEthiopianDate($timestamp = null): array {
     $monthData = $ethMonths[$ethMonth] ?? $ethMonths[1];
     $weekdayData = $weekdays[$dayOfWeek] ?? $weekdays[0];
 
-    $pad = fn($n) => str_pad($n, 2, '0', STR_PAD_LEFT);
+    $pad = fn($n) => str_pad((string)$n, 2, '0', STR_PAD_LEFT);
     $displayHours = $hours % 12 ?: 12;
     $ampm = $hours >= 12 ? 'PM' : 'AM';
 
@@ -190,7 +208,6 @@ function toEthiopianDate($timestamp = null): array {
 function saveBase64Image(string $base64Data, string $subfolder = 'permits'): ?string {
     if (empty($base64Data)) return null;
 
-    // Already a relative path or URL
     if (!str_starts_with($base64Data, 'data:image/')) {
         return $base64Data;
     }
@@ -211,7 +228,8 @@ function saveBase64Image(string $base64Data, string $subfolder = 'permits'): ?st
         return null;
     }
 
-    $targetDir = APP_ROOT . '/image/' . trim($subfolder, '/') . '/';
+    $root = defined('ROOT_PATH') ? ROOT_PATH : (defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__));
+    $targetDir = $root . '/image/' . trim($subfolder, '/') . '/';
     if (!is_dir($targetDir)) {
         @mkdir($targetDir, 0775, true);
     }

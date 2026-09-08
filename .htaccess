@@ -1,0 +1,27 @@
+# Enforcement Pro - Apache / InfinityFree Configuration
+# Charset & MIME
+AddDefaultCharset UTF-8
+DirectoryIndex index.php login.php
+
+# Disable directory browsing
+Options -Indexes
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Prevent direct access to sensitive config files
+<FilesMatch "^(config\.php|database\.php|\.env|\.git)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# PHP Execution & Upload Constraints
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 12M
+    php_value max_execution_time 120
+</IfModule>

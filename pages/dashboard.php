@@ -64,7 +64,7 @@ $totalVerifs = (int)$pdo->query("SELECT COUNT(*) FROM verification_logs")->fetch
         <?= $isAmharic ? 'የትራፊክ ቁጥጥርና ፈቃድ ማዕከል' : 'Traffic Enforcement & Permit Central' ?>
       </h2>
       <p class="text-xs text-blue-200 mt-1 flex items-center gap-2">
-        <span><?= htmlspecialchars($currentUser['fullName']) ?> (<?= htmlspecialchars($userRole) ?>)</span>
+        <span><?= htmlspecialchars($currentUser['fullName'] ?? $currentUser['name'] ?? 'System Officer') ?> (<?= htmlspecialchars($userRole ?? 'clerk') ?>)</span>
         <span>•</span>
         <span><?= htmlspecialchars($settings['sub_city_office'] ?? 'Belay Zeleke Sub-City Office') ?></span>
       </p>
@@ -301,17 +301,17 @@ $totalVerifs = (int)$pdo->query("SELECT COUNT(*) FROM verification_logs")->fetch
               <span class="w-2 h-2 rounded-full <?= $log['verification_status'] === 'flagged' ? 'bg-red-500' : ($log['verification_status'] === 'warning' ? 'bg-amber-500' : 'bg-emerald-500') ?>"></span>
               <div>
                 <div class="text-xs font-bold text-slate-900 flex items-center gap-2">
-                  <span><?= htmlspecialchars($log['plate_number']) ?></span>
-                  <span class="text-[10px] font-normal text-slate-500">(<?= htmlspecialchars($log['full_name']) ?>)</span>
+                  <span><?= htmlspecialchars($log['plate_number'] ?? 'N/A') ?></span>
+                  <span class="text-[10px] font-normal text-slate-500">(<?= htmlspecialchars($log['full_name'] ?? 'Driver') ?>)</span>
                 </div>
-                <div class="text-[10px] text-slate-400"><?= htmlspecialchars($log['location_name'] ?? 'Patrol Checkpoint') ?> • <?= htmlspecialchars($log['scanned_at']) ?></div>
+                <div class="text-[10px] text-slate-400"><?= htmlspecialchars($log['location_name'] ?? 'Patrol Checkpoint') ?> • <?= htmlspecialchars($log['scanned_at'] ?? 'Recently') ?></div>
               </div>
             </div>
             <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <?= 
-              $log['verification_status'] === 'flagged' ? 'bg-rose-100 text-rose-800' :
-              ($log['verification_status'] === 'warning' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800')
+              ($log['verification_status'] ?? '') === 'flagged' ? 'bg-rose-100 text-rose-800' :
+              (($log['verification_status'] ?? '') === 'warning' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800')
             ?>">
-              <?= htmlspecialchars($log['verification_status']) ?>
+              <?= htmlspecialchars($log['verification_status'] ?? 'Verified') ?>
             </span>
           </div>
         <?php endforeach; ?>
