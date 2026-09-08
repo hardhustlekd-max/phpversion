@@ -8,12 +8,21 @@ $userRole = Auth::role();
 $lang = $_SESSION['app_lang'] ?? 'am';
 $isAmharic = ($lang === 'am');
 
-$settings = $pdo->query("SELECT * FROM system_settings WHERE id = 'global_config' LIMIT 1")->fetch();
-$regCount = (int)$pdo->query("SELECT COUNT(*) FROM motorcycle_registrations")->fetchColumn();
-$rejectedCount = (int)$pdo->query("SELECT COUNT(*) FROM motorcycle_registrations WHERE status = 'rejected'")->fetchColumn();
-$userCount = (int)$pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
-$vlogCount = (int)$pdo->query("SELECT COUNT(*) FROM verification_logs")->fetchColumn();
-$rcptCount = (int)$pdo->query("SELECT COUNT(*) FROM payment_receipts")->fetchColumn();
+try {
+    $settings = $pdo->query("SELECT * FROM system_settings WHERE id = 'global_config' LIMIT 1")->fetch() ?: [];
+    $regCount = (int)$pdo->query("SELECT COUNT(*) FROM motorcycle_registrations")->fetchColumn();
+    $rejectedCount = (int)$pdo->query("SELECT COUNT(*) FROM motorcycle_registrations WHERE status = 'rejected'")->fetchColumn();
+    $userCount = (int)$pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+    $vlogCount = (int)$pdo->query("SELECT COUNT(*) FROM verification_logs")->fetchColumn();
+    $rcptCount = (int)$pdo->query("SELECT COUNT(*) FROM payment_receipts")->fetchColumn();
+} catch (Exception $e) {
+    $settings = [];
+    $regCount = 0;
+    $rejectedCount = 0;
+    $userCount = 0;
+    $vlogCount = 0;
+    $rcptCount = 0;
+}
 ?>
 
 <div class="max-w-4xl mx-auto space-y-6">

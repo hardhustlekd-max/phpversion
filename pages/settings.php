@@ -9,6 +9,9 @@ $lang = $_SESSION['app_lang'] ?? 'am';
 $isAmharic = ($lang === 'am');
 
 $settings = $pdo->query("SELECT * FROM system_settings WHERE id = 'global_config' LIMIT 1")->fetch();
+if (!$settings || !is_array($settings)) {
+    $settings = [];
+}
 ?>
 
 <div class="max-w-4xl mx-auto space-y-6">

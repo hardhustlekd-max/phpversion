@@ -54,8 +54,7 @@ $roles = ['superadmin', 'admin', 'officer', 'clerk', 'public'];
         </thead>
         <tbody class="divide-y divide-slate-100">
           <?php foreach (SYSTEM_TASKS as $task): 
-            $tid = $task['id'];
-            $taskData = $matrix[$tid] ?? null;
+            $tid = (int)$task['id'];
           ?>
             <tr class="hover:bg-slate-50/80 transition-colors">
               <td class="py-3 px-4 font-mono font-bold text-slate-400"><?= $tid ?></td>
@@ -64,7 +63,7 @@ $roles = ['superadmin', 'admin', 'officer', 'clerk', 'public'];
                 <div class="text-[11px] text-slate-500"><?= htmlspecialchars($task['title_am']) ?></div>
               </td>
               <?php foreach ($roles as $r): 
-                $currPerm = $taskData[$r] ?? ($r === 'superadmin' ? 'allow' : 'deny');
+                $currPerm = RBAC::getPermissionState($r, $tid);
                 $isSuper = ($r === 'superadmin');
               ?>
                 <td class="py-3 px-4 text-center">

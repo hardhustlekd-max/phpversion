@@ -88,20 +88,20 @@ $logs = $stmt->fetchAll();
               $vStatus = $log['verification_status'];
             ?>
               <tr class="hover:bg-slate-50/80 transition-colors">
-                <td class="py-3 px-4 font-mono text-slate-500"><?= htmlspecialchars($log['scanned_at']) ?></td>
-                <td class="py-3 px-4 font-mono font-black text-blue-900"><?= htmlspecialchars($log['plate_number']) ?></td>
-                <td class="py-3 px-4 font-bold text-slate-900"><?= htmlspecialchars($log['full_name']) ?></td>
+                <td class="py-3 px-4 font-mono text-slate-500"><?= htmlspecialchars($log['scanned_at'] ?? $log['created_at'] ?? '') ?></td>
+                <td class="py-3 px-4 font-mono font-black text-blue-900"><?= htmlspecialchars($log['plate_number'] ?? '') ?></td>
+                <td class="py-3 px-4 font-bold text-slate-900"><?= htmlspecialchars($log['full_name'] ?? '') ?></td>
                 <td class="py-3 px-4 text-slate-600"><?= htmlspecialchars($log['location_name'] ?? 'Patrol Checkpoint') ?></td>
-                <td class="py-3 px-4 font-mono text-purple-700 font-bold"><?= htmlspecialchars($log['officer_badge_id']) ?></td>
+                <td class="py-3 px-4 font-mono text-purple-700 font-bold"><?= htmlspecialchars($log['officer_badge_id'] ?? '') ?></td>
                 <td class="py-3 px-4">
                   <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase <?= 
                     $vStatus === 'verified' ? 'bg-emerald-100 text-emerald-800' :
                     ($vStatus === 'warning' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800')
                   ?>">
-                    <?= htmlspecialchars($vStatus) ?>
+                    <?= htmlspecialchars($vStatus ?? 'verified') ?>
                   </span>
                 </td>
-                <td class="py-3 px-4 text-slate-500 italic"><?= htmlspecialchars($log['officer_notes'] ?: '—') ?></td>
+                <td class="py-3 px-4 text-slate-500 italic"><?= htmlspecialchars($log['officer_notes'] ?? '—') ?></td>
               </tr>
             <?php endforeach; ?>
           </tbody>

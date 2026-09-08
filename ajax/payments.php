@@ -40,21 +40,34 @@ try {
         $expiredCount = 0;
 
         foreach ($receipts as &$rc) {
-            $expDate = new DateTime($rc['expiration_date']);
-            $diffDays = (int)$now->diff($expDate)->format('%r%a');
-
-            if ($diffDays < 0) {
-                $rc['payment_status'] = 'expired';
-                $rc['days_remaining'] = $diffDays;
-                $expiredCount++;
-            } elseif ($diffDays <= 30) {
-                $rc['payment_status'] = 'expiring_soon';
-                $rc['days_remaining'] = $diffDays;
-                $expiringSoonCount++;
+            $expStr = $rc['expiration_date'] ?? '';
+            $diffDays = 0;
+            if (!empty($expStr) && $expStr !== '0000-00-00') {
+                try {
+                    $expDate = new DateTime($expStr);
+                    $diffDays = (int)$now->diff($expDate)->format('%r%a');
+                    if ($diffDays < 0) {
+                        $rc['payment_status'] = 'expired';
+                        $rc['days_remaining'] = $diffDays;
+                        $expiredCount++;
+                    } elseif ($diffDays <= 30) {
+                        $rc['payment_status'] = 'expiring_soon';
+                        $rc['days_remaining'] = $diffDays;
+                        $expiringSoonCount++;
+                    } else {
+                        $rc['payment_status'] = 'active';
+                        $rc['days_remaining'] = $diffDays;
+                        $activeCount++;
+                    }
+                } catch (Exception $e) {
+                    $rc['payment_status'] = 'expired';
+                    $rc['days_remaining'] = 0;
+                    $expiredCount++;
+                }
             } else {
-                $rc['payment_status'] = 'active';
-                $rc['days_remaining'] = $diffDays;
-                $activeCount++;
+                $rc['payment_status'] = 'expired';
+                $rc['days_remaining'] = 0;
+                $expiredCount++;
             }
         }
 

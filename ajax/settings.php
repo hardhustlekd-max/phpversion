@@ -48,26 +48,50 @@ try {
 
         $frozenSubcities = isset($input['frozen_subcities']) ? json_encode($input['frozen_subcities']) : null;
 
-        $stmt = $pdo->prepare("
-            UPDATE system_settings SET
-                officer_name = ?, department = ?, sub_city_office = ?, default_printer = ?,
-                card_stock_type = ?, calendar_system = ?, auto_print_qr = ?, email_alerts = ?,
-                security_2fa = ?, high_risk_alerts = ?, show_clerk_permit_status = ?,
-                show_clerk_submissions_action = ?, show_clerk_approved_vehicles_action = ?,
-                show_clerk_payment_kpis = ?, show_clerk_payment_records_table = ?,
-                clerk_payment_kpi_permission = ?, clerk_payment_table_permission = ?,
-                frozen_subcities = COALESCE(?, frozen_subcities)
-            WHERE id = 'global_config'
-        ");
-
-        $stmt->execute([
-            $officer, $dept, $subCityOffice, $printer,
-            $stock, $calendar, $autoPrint, $emailAlerts,
-            $security2fa, $highRiskAlerts, $showClerkPermit,
-            $showClerkSubmissions, $showClerkApproved,
-            $showClerkPaymentKpis, $showClerkPaymentTable,
-            $clerkKpiPerm, $clerkTablePerm, $frozenSubcities
-        ]);
+        $exists = $pdo->query("SELECT id FROM system_settings WHERE id = 'global_config' LIMIT 1")->fetch();
+        if ($exists) {
+            $stmt = $pdo->prepare("
+                UPDATE system_settings SET
+                    officer_name = ?, department = ?, sub_city_office = ?, default_printer = ?,
+                    card_stock_type = ?, calendar_system = ?, auto_print_qr = ?, email_alerts = ?,
+                    security_2fa = ?, high_risk_alerts = ?, show_clerk_permit_status = ?,
+                    show_clerk_submissions_action = ?, show_clerk_approved_vehicles_action = ?,
+                    show_clerk_payment_kpis = ?, show_clerk_payment_records_table = ?,
+                    clerk_payment_kpi_permission = ?, clerk_payment_table_permission = ?,
+                    frozen_subcities = COALESCE(?, frozen_subcities)
+                WHERE id = 'global_config'
+            ");
+            $stmt->execute([
+                $officer, $dept, $subCityOffice, $printer,
+                $stock, $calendar, $autoPrint, $emailAlerts,
+                $security2fa, $highRiskAlerts, $showClerkPermit,
+                $showClerkSubmissions, $showClerkApproved,
+                $showClerkPaymentKpis, $showClerkPaymentTable,
+                $clerkKpiPerm, $clerkTablePerm, $frozenSubcities
+            ]);
+        } else {
+            $stmt = $pdo->prepare("
+                INSERT INTO system_settings (
+                    id, officer_name, department, sub_city_office, default_printer,
+                    card_stock_type, calendar_system, auto_print_qr, email_alerts,
+                    security_2fa, high_risk_alerts, show_clerk_permit_status,
+                    show_clerk_submissions_action, show_clerk_approved_vehicles_action,
+                    show_clerk_payment_kpis, show_clerk_payment_records_table,
+                    clerk_payment_kpi_permission, clerk_payment_table_permission,
+                    frozen_subcities, updated_at
+                ) VALUES (
+                    'global_config', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW()
+                )
+            ");
+            $stmt->execute([
+                $officer, $dept, $subCityOffice, $printer,
+                $stock, $calendar, $autoPrint, $emailAlerts,
+                $security2fa, $highRiskAlerts, $showClerkPermit,
+                $showClerkSubmissions, $showClerkApproved,
+                $showClerkPaymentKpis, $showClerkPaymentTable,
+                $clerkKpiPerm, $clerkTablePerm, $frozenSubcities ?? '[]'
+            ]);
+        }
 
         echo json_encode(['success' => true]);
         exit;

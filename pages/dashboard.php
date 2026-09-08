@@ -9,8 +9,8 @@ $userBadge = Auth::badgeId();
 $lang = $_SESSION['app_lang'] ?? 'am';
 $isAmharic = ($lang === 'am');
 
-// Load dynamic system settings
-$settings = $pdo->query("SELECT * FROM system_settings WHERE id = 'global_config'")->fetch();
+// Load dynamic system settings safely
+$settings = $pdo->query("SELECT * FROM system_settings WHERE id = 'global_config'")->fetch() ?: [];
 
 // Fetch scoped statistics
 $regQuery = "SELECT status, vehicle_category, sub_city FROM motorcycle_registrations WHERE 1=1";

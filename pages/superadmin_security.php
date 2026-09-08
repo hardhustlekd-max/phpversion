@@ -8,7 +8,11 @@ $userRole = Auth::role();
 $lang = $_SESSION['app_lang'] ?? 'am';
 $isAmharic = ($lang === 'am');
 
-$logs = $pdo->query("SELECT * FROM system_audit_logs ORDER BY created_at DESC LIMIT 150")->fetchAll();
+try {
+    $logs = $pdo->query("SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 150")->fetchAll();
+} catch (Exception $e) {
+    $logs = [];
+}
 ?>
 
 <div class="space-y-6">
@@ -57,12 +61,12 @@ $logs = $pdo->query("SELECT * FROM system_audit_logs ORDER BY created_at DESC LI
           <tbody class="divide-y divide-slate-100">
             <?php foreach ($logs as $l): ?>
               <tr class="hover:bg-slate-50/80 transition-colors">
-                <td class="py-3 px-4 font-mono text-slate-500"><?= htmlspecialchars($l['created_at']) ?></td>
-                <td class="py-3 px-4 font-mono font-bold text-purple-900"><?= htmlspecialchars($l['user_badge_id'] ?: 'System') ?></td>
-                <td class="py-3 px-4 uppercase text-[10px] font-bold text-slate-500"><?= htmlspecialchars($l['user_role'] ?: '—') ?></td>
-                <td class="py-3 px-4 font-bold text-slate-800"><?= htmlspecialchars($l['action']) ?></td>
-                <td class="py-3 px-4 font-mono text-slate-500"><?= htmlspecialchars($l['ip_address'] ?: '127.0.0.1') ?></td>
-                <td class="py-3 px-4 text-slate-600"><?= htmlspecialchars($l['details'] ?: '—') ?></td>
+                <td class="py-3 px-4 font-mono text-slate-500"><?= htmlspecialchars($l['timestamp'] ?? $l['created_at'] ?? '') ?></td>
+                <td class="py-3 px-4 font-mono font-bold text-purple-900"><?= htmlspecialchars($l['actor_badge_id'] ?? $l['user_badge_id'] ?? 'System') ?></td>
+                <td class="py-3 px-4 uppercase text-[10px] font-bold text-slate-500"><?= htmlspecialchars($l['actor_role'] ?? $l['user_role'] ?? '—') ?></td>
+                <td class="py-3 px-4 font-bold text-slate-800"><?= htmlspecialchars($l['action'] ?? '') ?></td>
+                <td class="py-3 px-4 font-mono text-slate-500"><?= htmlspecialchars($l['ip_address'] ?? '127.0.0.1') ?></td>
+                <td class="py-3 px-4 text-slate-600"><?= htmlspecialchars($l['details'] ?? '—') ?></td>
               </tr>
             <?php endforeach; ?>
           </tbody>
@@ -77,7 +81,7 @@ $logs = $pdo->query("SELECT * FROM system_audit_logs ORDER BY created_at DESC LI
   async function clearAuditLogs() {
     if (!confirm('Are you sure you want to clear the audit logs?')) return;
     try {
-      const res = await AppAPI.post('ajax/maintenance.php?action=clear_audit', {});
+      const res = await AppAPI.post('ajax/audit_logs.php?action=clear', {});
       if (res.success) {
         showToast('Audit log purged', 'success');
         setTimeout(() => window.location.reload(), 500);

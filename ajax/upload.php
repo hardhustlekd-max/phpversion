@@ -28,11 +28,32 @@ if ($file['error'] !== UPLOAD_ERR_OK) {
     exit;
 }
 
-// Security: Check mime type and extension
-$allowedTypes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-$finfo = finfo_open(FILEINFO_MIME_TYPE);
-$mimeType = finfo_file($finfo, $file['tmp_name']);
-finfo_close($finfo);
+// Security: Check mime type and extension safely across various hosting setups
+$allowedTypes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/jpg' => 'jpg'];
+$mimeType = '';
+
+if (function_exists('finfo_open')) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    if ($finfo) {
+        $mimeType = finfo_file($finfo, $file['tmp_name']) ?: '';
+        finfo_close($finfo);
+    }
+} elseif (function_exists('mime_content_type')) {
+    $mimeType = mime_content_type($file['tmp_name']) ?: '';
+} elseif (function_exists('getimagesize')) {
+    $imgInfo = @getimagesize($file['tmp_name']);
+    if ($imgInfo && !empty($imgInfo['mime'])) {
+        $mimeType = $imgInfo['mime'];
+    }
+}
+
+// Fallback to client-provided type / extension if server modules are restricted
+if (empty($mimeType)) {
+    $clientExt = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
+    if (in_array($clientExt, ['jpg', 'jpeg'])) $mimeType = 'image/jpeg';
+    elseif ($clientExt === 'png') $mimeType = 'image/png';
+    elseif ($clientExt === 'webp') $mimeType = 'image/webp';
+}
 
 if (!isset($allowedTypes[$mimeType])) {
     http_response_code(400);
